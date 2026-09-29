@@ -1,22 +1,50 @@
-// src/components/LoadingState.tsx — skeleton, no spinner pelado
-interface Props {
-  variant?: "texto" | "foto";
-}
+// src/components/LoadingState.tsx — Taku "lee" el documento y narra las etapas.
+// Es el momento de más ansiedad (5-20 s): mostramos avance real percibido y
+// damos una salida (cancelar).
+import { useEffect, useState } from "react";
+import { TakuAvatar } from "../taku/TakuAvatar";
+import { useTakuOnStage } from "../taku/TakuContext";
 
-export function LoadingState({ variant = "texto" }: Props) {
-  const msg = variant === "foto" ? "Leyendo el documento…" : "Analizando…";
-  const sub = variant === "foto"
-    ? "La foto tarda más que texto — se comprime a 1600px y se lee con visión."
-    : "Llamando a gemini-3.5-flash con responseSchema (thinkingLevel: low)…";
+const ETAPAS = {
+  foto: ["Mirando la foto…", "Leyendo la letra chica…", "Buscando plazos y requisitos…", "Armando tus pasos…"],
+  pdf: ["Abriendo el PDF…", "Leyendo la letra chica…", "Buscando plazos y requisitos…", "Armando tus pasos…"],
+  texto: ["Leyendo lo que me mandaste…", "Traduciendo del burocrático…", "Buscando plazos y requisitos…", "Armando tus pasos…"],
+};
+
+export function LoadingState({ fuente, onCancel }: { fuente: "foto" | "pdf" | "texto"; onCancel?: () => void }) {
+  useTakuOnStage(true);
+  const etapas = ETAPAS[fuente];
+  const [i, setI] = useState(0);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setI((n) => Math.min(n + 1, etapas.length - 1)), 2600);
+    return () => window.clearInterval(t);
+  }, [etapas.length]);
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, background: "#fafafa", marginTop: 16 }} aria-busy="true" aria-live="polite">
-      <div style={{ height: 14, background: "#e5e5e5", borderRadius: 4, width: "60%", marginBottom: 10, animation: "pulse 1.2s infinite" }} />
-      <div style={{ height: 14, background: "#e5e5e5", borderRadius: 4, width: "80%", marginBottom: 10 }} />
-      <div style={{ height: 14, background: "#e5e5e5", borderRadius: 4, width: "70%", marginBottom: 10 }} />
-      <div style={{ height: 10, background: "#eee", borderRadius: 4, width: "45%" }} />
-      <p style={{ fontSize: 12, color: "#555", marginTop: 12, fontWeight: 600 }}>{msg}</p>
-      <p style={{ fontSize: 11, color: "#777", margin: "4px 0 0" }}>{sub}</p>
+    <div className="card loading" aria-busy="true">
+      <div className="loading__taku">
+        <TakuAvatar mood="thinking" size={132} eager />
+        <span className="loading__scan" aria-hidden="true" />
+      </div>
+      <div className="loading__body">
+        <p className="loading__title" aria-live="polite">
+          {etapas[i]}
+        </p>
+        <ol className="loading__steps">
+          {etapas.map((e, n) => (
+            <li key={e} className={n < i ? "is-done" : n === i ? "is-now" : ""}>
+              {e.replace("…", "")}
+            </li>
+          ))}
+        </ol>
+        <p className="loading__hint">{fuente === "texto" ? "Suele tardar unos segundos." : "Las fotos y PDFs tardan un poquito más."}</p>
+        {onCancel && (
+          <button type="button" className="btn btn--link" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

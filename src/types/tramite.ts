@@ -1,5 +1,5 @@
 // src/types/tramite.ts
-// Tipos TS que matchean el responseSchema de src/lib/schema.ts
+// Tipos compartidos cliente/servidor — matchean api/_lib/schema.ts
 
 export type Urgencia = "baja" | "media" | "alta";
 export type SeveridadAlerta = "info" | "importante" | "critico";
@@ -14,11 +14,32 @@ export interface Alerta {
   severidad: SeveridadAlerta;
 }
 
+export interface TerminoGlosario {
+  termino: string;
+  significado: string;
+}
+
 export interface TramiteTraducido {
+  /** Nombre corto. Opcional: las respuestas viejas / de ejemplo pueden no traerlo. */
+  titulo?: string;
   resumen: string;
   organismo: string;
   urgencia: Urgencia;
   checklist: ChecklistItem[];
   alertas: Alerta[];
   plazo: string;
+  glosario?: TerminoGlosario[];
+}
+
+export type FuenteTramite = "foto" | "pdf" | "texto" | "ejemplo";
+
+/** Lo que el cliente manda a POST /api/traducir */
+export type TraducirRequest =
+  | { tipo: "texto"; texto: string }
+  | { tipo: "archivos"; fuente: "foto" | "pdf"; archivos: { mimeType: string; data: string }[] };
+
+export type ApiErrorCode = "quota" | "busy" | "too_large" | "bad_input" | "config" | "unreadable" | "unknown";
+
+export interface ApiErrorBody {
+  error: { code: ApiErrorCode; message: string };
 }

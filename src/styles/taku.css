@@ -1,0 +1,590 @@
+/* src/styles/taku.css — Taku: avatar con estados, dock, globo y chat.
+   Todas las animaciones mueven el contenedor; la imagen original no se altera. */
+
+/* ── Avatar ──────────────────────────────────────────── */
+.taku-avatar {
+  --taku-size: 88px;
+  position: relative;
+  display: inline-block;
+  width: var(--taku-size);
+  height: var(--taku-size);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.taku-avatar__body {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 92%;
+  will-change: transform;
+}
+.taku-avatar__body img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(15, 60, 30, 0.18));
+  -webkit-user-drag: none;
+}
+
+.taku-avatar[data-mood="idle"] .taku-avatar__body {
+  animation: takuFloat 4.2s ease-in-out infinite;
+}
+.taku-avatar[data-mood="greet"] .taku-avatar__body {
+  animation: takuWave 1s ease-in-out 2;
+}
+.taku-avatar[data-mood="thinking"] .taku-avatar__body {
+  animation: takuRead 2.4s ease-in-out infinite;
+}
+.taku-avatar[data-mood="happy"] .taku-avatar__body {
+  animation: takuHop 0.55s var(--ease-out) 2;
+}
+.taku-avatar[data-mood="celebrate"] .taku-avatar__body {
+  animation: takuJump 0.8s var(--ease-out) 3;
+}
+.taku-avatar[data-mood="concerned"] .taku-avatar__body {
+  animation: takuShake 0.5s ease-in-out, takuDroop 1.6s ease-in-out 0.5s both;
+}
+.taku-avatar[data-mood="alert"] .taku-avatar__body {
+  animation: takuAlert 0.7s var(--ease-spring) 2;
+}
+
+@keyframes takuFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+}
+@keyframes takuWave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-9deg);
+  }
+  45% {
+    transform: rotate(8deg);
+  }
+  70% {
+    transform: rotate(-5deg);
+  }
+  85% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes takuRead {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-3px);
+  }
+}
+@keyframes takuHop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  15% {
+    transform: translateY(0) scale(1.04, 0.95);
+  }
+  50% {
+    transform: translateY(-14px) scale(0.98, 1.03);
+  }
+}
+@keyframes takuJump {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  12% {
+    transform: translateY(0) scale(1.06, 0.92);
+  }
+  45% {
+    transform: translateY(-26px) rotate(-7deg);
+  }
+  70% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+@keyframes takuShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px) rotate(-3deg);
+  }
+  40% {
+    transform: translateX(5px) rotate(3deg);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+@keyframes takuDroop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  40%,
+  70% {
+    transform: translateY(4px) rotate(-4deg);
+  }
+}
+@keyframes takuAlert {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.1) translateY(-6px);
+  }
+}
+
+/* Puntitos "pensando" */
+.taku-avatar__dots {
+  position: absolute;
+  top: 4%;
+  right: -6%;
+  display: flex;
+  gap: 3px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.taku-avatar__dots i,
+.msg--typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: dot 1s ease-in-out infinite;
+}
+.taku-avatar__dots i:nth-child(2),
+.msg--typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.taku-avatar__dots i:nth-child(3),
+.msg--typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* "!" de alerta */
+.taku-avatar__bang {
+  position: absolute;
+  top: 0;
+  right: 2%;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--alta-ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 0 0 3px var(--card);
+  animation: bangIn 0.4s var(--ease-spring) both;
+}
+@keyframes bangIn {
+  from {
+    transform: scale(0);
+  }
+}
+
+/* Confeti al completar */
+.taku-avatar__confetti {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  pointer-events: none;
+}
+.taku-avatar__confetti i {
+  position: absolute;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--taku);
+  transform: rotate(calc(var(--i) * 30deg)) translateY(0);
+  animation: confetti 1.3s var(--ease-out) both;
+  animation-delay: calc(var(--i) * 18ms);
+}
+.taku-avatar__confetti i:nth-child(3n + 1) {
+  background: var(--accent);
+}
+.taku-avatar__confetti i:nth-child(3n + 2) {
+  background: #f2b33d;
+}
+.taku-avatar__confetti i:nth-child(4n) {
+  background: #ed6fa0;
+}
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    transform: rotate(calc(var(--i) * 30deg)) translateY(0) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 30deg + 90deg)) translateY(-70px) scale(1);
+  }
+}
+
+/* ── Dock (esquina inferior izquierda) ──────────────── */
+.taku-dock {
+  position: fixed;
+  z-index: 50;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  transition: transform 0.45s var(--ease-spring), opacity 0.3s;
+}
+.taku-dock > * {
+  pointer-events: auto;
+}
+.taku-dock.is-hidden {
+  transform: translateY(130%);
+  opacity: 0;
+}
+.taku-dock__launcher {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  animation: dockIn 0.8s var(--ease-spring) 0.4s both;
+}
+@keyframes dockIn {
+  from {
+    transform: translateY(120%);
+  }
+}
+.taku-dock__button {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 24px;
+  -webkit-tap-highlight-color: transparent;
+}
+.taku-dock__button .taku-avatar {
+  z-index: 1;
+  transition: transform 0.25s var(--ease-spring);
+}
+.taku-dock__button:hover .taku-avatar,
+.taku-dock__button:focus-visible .taku-avatar {
+  transform: translateY(-4px) scale(1.04);
+}
+.taku-dock__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 56%;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.22), transparent);
+  transform: translateX(-50%);
+}
+.taku-dock__label {
+  position: absolute;
+  left: calc(100% - 6px);
+  bottom: 14px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s, transform 0.2s var(--ease-out);
+  pointer-events: none;
+}
+.taku-dock__button:hover .taku-dock__label,
+.taku-dock__button:focus-visible .taku-dock__label {
+  opacity: 1;
+  transform: none;
+}
+.taku-dock__mute {
+  position: absolute;
+  left: -4px;
+  top: -2px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.taku-dock__launcher:hover .taku-dock__mute,
+.taku-dock__mute:focus-visible,
+.taku-dock__mute[aria-pressed="true"] {
+  opacity: 1;
+}
+
+/* Globo de diálogo */
+/* Va ENCIMA de Taku y se limita al margen izquierdo libre: en pantallas
+   anchas no pisa el contenido central. */
+.taku-bubble {
+  position: absolute;
+  left: 0;
+  bottom: 104px;
+  width: max-content;
+  max-width: clamp(240px, calc((100vw - var(--content)) / 2 - 36px), 300px);
+  padding: 12px 34px 12px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  line-height: 1.45;
+  transform-origin: 0% 100%;
+  animation: bubbleIn 0.4s var(--ease-spring) both;
+}
+.taku-bubble::after {
+  content: "";
+  position: absolute;
+  left: 30px;
+  bottom: -9px;
+  width: 16px;
+  height: 16px;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  border-bottom-left-radius: 4px;
+}
+.taku-bubble__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.chip--taku {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.taku-bubble__close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+}
+.taku-bubble__close:hover {
+  background: var(--card-soft);
+  color: var(--ink);
+}
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(6px);
+  }
+}
+
+/* ── Chat ────────────────────────────────────────────── */
+.taku-chat {
+  position: absolute;
+  left: 0;
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 28px));
+  height: min(560px, calc(100dvh - 140px));
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transform-origin: 10% 100%;
+  animation: chatIn 0.35s var(--ease-spring) both;
+}
+@keyframes chatIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(12px);
+  }
+}
+.taku-chat__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--accent-soft), var(--taku-soft));
+}
+.taku-chat__head div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.taku-chat__head span {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.taku-chat__list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  overscroll-behavior: contain;
+}
+.msg {
+  max-width: 86%;
+  padding: 10px 13px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-line;
+  animation: msgIn 0.25s var(--ease-out) both;
+}
+.msg--taku {
+  align-self: flex-start;
+  background: var(--card-soft);
+  border-bottom-left-radius: 5px;
+}
+.msg--user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-bottom-right-radius: 5px;
+}
+.msg--typing {
+  display: flex;
+  gap: 4px;
+  padding: 13px 14px;
+}
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.taku-chat__chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 14px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.taku-chat__chips .chip {
+  flex-shrink: 0;
+}
+.taku-chat__form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.taku-chat__form input {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+.taku-chat__note {
+  padding: 0 14px 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Mobile: Taku más chico y sin tapar ─────────────── */
+@media (max-width: 640px) {
+  .taku-dock .taku-dock__button .taku-avatar {
+    --taku-size: 66px !important;
+  }
+  .taku-dock__label {
+    display: none;
+  }
+  .taku-dock__mute {
+    display: none; /* en táctiles se silencia desde el encabezado del chat */
+  }
+  /* Franja compacta al lado de Taku, pegada abajo: no sube sobre el contenido */
+  .taku-bubble {
+    left: 62px;
+    bottom: 6px;
+    max-width: calc(100vw - 86px);
+    padding: 10px 30px 10px 12px;
+    border-radius: 16px 16px 16px 6px;
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+  .taku-bubble p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .taku-bubble::after {
+    left: -7px;
+    bottom: 12px;
+    width: 12px;
+    height: 12px;
+    border-bottom-left-radius: 0;
+    clip-path: polygon(0 50%, 100% 0, 100% 100%);
+    border: 0;
+  }
+  .taku-bubble__actions {
+    margin-top: 6px;
+  }
+  .taku-dock.is-keyboard:not(.is-chat) {
+    transform: translateY(130%);
+    opacity: 0;
+  }
+  .taku-dock.is-chat {
+    left: 8px;
+    right: 8px;
+  }
+  .taku-chat {
+    bottom: 74px;
+    width: calc(100vw - 16px);
+    height: min(70dvh, calc(100dvh - 100px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taku-avatar__body {
+    animation: none !important;
+  }
+  .taku-avatar__confetti {
+    display: none;
+  }
+}

@@ -1,0 +1,91 @@
+/* src/styles/tokens.css — design tokens (claro / oscuro) */
+:root {
+  color-scheme: light;
+  --bg: #fafaf8;
+  --bg-tint: #f3f1ea;
+  --card: #ffffff;
+  --card-soft: #f1efe8;
+  --border: #e5e3dc;
+  --border-strong: #cfccc2;
+  --ink: #1c1b1a;
+  --ink-soft: #4a4945;
+  --muted: #706f69;
+
+  --accent: #0f6b5c;
+  --accent-hover: #0b5549;
+  --accent-soft: #eaf3ef;
+  --accent-ink: #0b5549;
+  --on-accent: #ffffff;
+  --taku: #2db84c; /* verde hoja de Taku: solo acentos puntuales */
+  --taku-soft: #e4f6e7;
+
+  --alta-bg: #fbeaf0;
+  --alta-border: #ed93b1;
+  --alta-ink: #72243e;
+  --media-bg: #fdf3e7;
+  --media-border: #f0d4a8;
+  --media-ink: #633806;
+  --baja-bg: #eaf3ef;
+  --baja-border: #b7d9c8;
+  --baja-ink: #0b5549;
+  --info-bg: #f1f3f0;
+  --info-border: #dcdfd9;
+  --info-ink: #4a4945;
+  --danger: #b3261e;
+
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", monospace;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(28, 27, 26, 0.06);
+  --shadow: 0 1px 2px rgba(28, 27, 26, 0.05), 0 6px 20px rgba(28, 27, 26, 0.06);
+  --shadow-lg: 0 12px 40px rgba(28, 27, 26, 0.14);
+  --ring: 0 0 0 3px rgba(15, 107, 92, 0.28);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --content: 760px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #111413;
+    --bg-tint: #151917;
+    --card: #1a1e1c;
+    --card-soft: #222725;
+    --border: #2c3230;
+    --border-strong: #3c4441;
+    --ink: #ecebe6;
+    --ink-soft: #c9c7c0;
+    --muted: #9c9a92;
+
+    --accent: #3fb59c;
+    --accent-hover: #5cc6af;
+    --accent-soft: #15302a;
+    --accent-ink: #8adbc8;
+    --on-accent: #06201a;
+    --taku-soft: #16301d;
+
+    --alta-bg: #36171f;
+    --alta-border: #7a3350;
+    --alta-ink: #f4b7cb;
+    --media-bg: #34270f;
+    --media-border: #7a5a2a;
+    --media-ink: #f2cf99;
+    --baja-bg: #15302a;
+    --baja-border: #2b5c50;
+    --baja-ink: #9fdccb;
+    --info-bg: #1f2422;
+    --info-border: #333a37;
+    --info-ink: #c9c7c0;
+    --danger: #ff8a80;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.5);
+    --ring: 0 0 0 3px rgba(63, 181, 156, 0.35);
+  }
+}

@@ -1,0 +1,18 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 920, height: 1400 } });
+await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(800);
+const btns = page.locator('button:has-text("Ver resultado")');
+await btns.first().click();
+await page.waitForTimeout(1200);
+await page.screenshot({ path: 'screenshot-v2-0.png', fullPage: true });
+console.log('0 done');
+const items = page.locator('div[role="checkbox"]');
+await items.nth(0).click();
+await page.waitForTimeout(300);
+await items.nth(1).click();
+await page.waitForTimeout(400);
+await page.screenshot({ path: 'screenshot-v2-2.png', fullPage: true });
+console.log('2 done');
+await browser.close();

@@ -9,6 +9,8 @@
 //   ser en febrero y agosto (antes era enero/julio); el organismo se llama
 //   ahora ARCA, no AFIP. Actualizar el ejemplo si esto vuelve a cambiar.
 
+import type { TerminoGlosario } from "../types/tramite";
+
 export interface TramiteEjemplo {
   id: string;
   titulo: string;
@@ -181,3 +183,47 @@ migratorios internacionales o determinados trámites administrativos que
 exigen vigencia plena del documento.`,
   },
 ];
+
+// ── Extras para el modo demo ("Ver cómo queda"): título corto y glosario ────
+// Las respuestas pre-generadas (fallbackResponses.ts) son anteriores a estos
+// campos; se completan acá con definiciones generales y estables.
+
+export const EJEMPLOS_EXTRA: Record<string, { titulo: string; glosario: TerminoGlosario[] }> = {
+  monotributo: {
+    titulo: "Recategorización de Monotributo",
+    glosario: [
+      { termino: "Recategorización", significado: "Revisar si tenés que pasar a otra categoría del Monotributo según lo que facturaste y gastaste." },
+      { termino: "Clave Fiscal", significado: "La contraseña que te da ARCA para hacer trámites online con tu CUIT." },
+      { termino: "De oficio", significado: "Cuando el organismo lo hace por su cuenta, sin que vos lo pidas." },
+      { termino: "Domicilio Fiscal Electrónico", significado: "Una casilla de mensajes dentro de la web de ARCA donde te llegan las notificaciones oficiales." },
+      { termino: "Ingresos brutos devengados", significado: "Todo lo que facturaste en el período, lo hayas cobrado o no." },
+    ],
+  },
+  auh: {
+    titulo: "Asignación Universal por Hijo",
+    glosario: [
+      { termino: "Titular", significado: "La persona adulta que cobra la asignación a nombre de los chicos." },
+      { termino: "Retenido del 20%", significado: "Una parte de cada pago que ANSES guarda y te paga una vez al año si presentás los certificados." },
+      { termino: "Libreta AUH", significado: "El formulario donde se certifican la escuela y los controles de salud de cada chico." },
+      { termino: "Prestación", significado: "El beneficio o pago que da el organismo." },
+    ],
+  },
+  habilitacion: {
+    titulo: "Habilitación comercial municipal",
+    glosario: [
+      { termino: "Ejido municipal", significado: "La zona que abarca la municipalidad; donde rigen sus reglas." },
+      { termino: "Expediente", significado: "La carpeta del trámite: todo lo que presentás queda ahí con un número." },
+      { termino: "Factibilidad de uso de suelo", significado: "Un permiso que confirma que en esa dirección se puede hacer tu tipo de actividad." },
+      { termino: "Libre deuda", significado: "Un papel que dice que el inmueble no debe impuestos municipales." },
+      { termino: "Clausura preventiva", significado: "Que te cierren el local mientras se revisa la situación." },
+    ],
+  },
+  dni: {
+    titulo: "Renovación del DNI",
+    glosario: [
+      { termino: "RENAPER", significado: "El Registro Nacional de las Personas: el organismo que hace los DNI y pasaportes." },
+      { termino: "Mi Argentina", significado: "La app y web oficial del Estado donde podés sacar turnos y tener tu DNI digital." },
+      { termino: "Ejemplar", significado: "Cada versión física de tu DNI. Si lo renovás, te dan un ejemplar nuevo." },
+    ],
+  },
+};
