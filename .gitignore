@@ -27,3 +27,8 @@ dist-ssr
 
 test-results/
 playwright-report/
+
+# Skills para asistentes de IA generadas por la CLI de Vercel (locales, se regeneran)
+.agents/
+.claude/skills/
+skills-lock.json
