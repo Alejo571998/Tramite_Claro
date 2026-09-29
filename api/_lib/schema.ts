@@ -63,6 +63,11 @@ export const tramiteResponseSchema = {
       type: "string",
       description: "Plazo o vigencia detectada en el texto, si existe. String vacío si no se menciona ninguno.",
     },
+    fecha_limite: {
+      type: "string",
+      description:
+        "Fecha límite concreta en formato YYYY-MM-DD, SOLO si el texto dice una fecha exacta o se puede calcular sin suponer nada (ej: \"antes del 31 de diciembre\" → año en curso o el próximo si ya pasó). String vacío si no hay fecha concreta.",
+    },
     glosario: {
       type: "array",
       description: "Hasta 5 palabras difíciles del texto original explicadas en una frase. Array vacío si no hay.",
@@ -76,5 +81,5 @@ export const tramiteResponseSchema = {
       },
     },
   },
-  required: ["titulo", "resumen", "organismo", "urgencia", "checklist", "alertas", "plazo", "glosario"],
+  required: ["titulo", "resumen", "organismo", "urgencia", "checklist", "alertas", "plazo", "fecha_limite", "glosario"],
 } as const;

@@ -59,7 +59,9 @@ export function reactionFor(e: TakuEvent): TakuReaction | null {
         ms: 2200,
         priority: 3,
         message:
-          e.code === "network"
+          e.code === "rate_limited"
+            ? "Pará un cachito, que vamos muy rápido. En un ratito seguimos."
+            : e.code === "network"
             ? "Parece que se cortó internet. Cuando vuelva, probamos de nuevo."
             : e.code === "unreadable"
               ? "No llegué a leerlo bien. ¿Probamos con una foto con más luz, o pegando el texto?"
@@ -79,6 +81,30 @@ export function reactionFor(e: TakuEvent): TakuReaction | null {
 
     case "history:open":
       return e.count === 0 ? { mood: "idle", ms: 0, message: "Todavía no hay trámites guardados. ¡Probemos con el primero!" } : null;
+
+    case "deadline:soon":
+      return {
+        mood: "alert",
+        ms: 2200,
+        priority: 2,
+        message:
+          e.dias <= 0
+            ? `¡Ojo! «${e.titulo}» vence hoy. Si podés, resolvelo ya.`
+            : `Te recuerdo: a «${e.titulo}» le ${e.dias === 1 ? "queda 1 día" : `quedan ${e.dias} días`}.`,
+      };
+
+    case "input:quality": {
+      const que = e.issues.includes("oscura") ? "salió bastante oscura" : e.issues.includes("borrosa") ? "salió medio borrosa" : "tiene poca resolución";
+      return {
+        mood: "concerned",
+        ms: 1800,
+        priority: 1,
+        message: `La página ${e.pagina} ${que}. Si podés, sacala de nuevo con más luz y de frente. Si se lee bien, seguí igual.`,
+      };
+    }
+
+    case "share:received":
+      return { mood: "happy", ms: 1600, priority: 2, message: `¡Me llegó${e.count > 1 ? `n ${e.count} archivos` : " tu archivo"}! Revisalo y tocá «Explicámelo».` };
 
     case "result:revisit":
       return e.done > 0 && e.done < e.total

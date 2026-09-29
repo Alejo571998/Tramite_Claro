@@ -14,7 +14,11 @@ y se retira cuando está leyendo o completando algo.
 | Avance del checklist | Motivación | Refuerzos en hitos (primer paso, mitad, último) y **festejo con confeti** al completar | `checklist:progress` / `checklist:complete` |
 | Error | Frustración | Reacción de preocupación + mensaje sin tecnicismos ("No es tu culpa") | `analyze:error` |
 | Volver a un trámite | Olvido | "Seguimos donde quedaste: 2 de 5" | `result:revisit` |
-| Dudas | Soledad frente al papel | Chat contextual sobre el trámite abierto | `taku/TakuChat.tsx` |
+| Dudas | Soledad frente al papel | Chat real (Gemini) sobre el trámite abierto; solo cita la web oficial verificada | `taku/TakuChat.tsx` + `api/taku.ts` |
+| Vencimiento cerca | Olvido | Al entrar, recuerda el trámite que vence en ≤ 7 días | `deadline:soon` |
+| Foto oscura o borrosa | Frustración posterior | Avisa antes de enviar, sin bloquear | `input:quality` |
+| Documento compartido desde WhatsApp | — | "¡Me llegó tu archivo!" | `share:received` |
+| Feedback | — | Agradece o pide perdón según la valoración | `FeedbackWidget` |
 
 ## Reglas para no molestar
 
@@ -38,14 +42,10 @@ src/taku/
   TakuDock.tsx      esquina inferior izquierda: globo + launcher
   TakuChat.tsx      panel de chat (solo conoce la interfaz del proveedor)
   chat/provider.ts  interfaz TakuChatProvider + factory
-  chat/localProvider.ts   hoy: responde con los datos del trámite abierto
-  chat/remoteProvider.ts  mañana: POST a un backend real (con fallback local)
+  chat/remoteProvider.ts  por defecto: POST /api/taku (Gemini), con fallback local
+  chat/localProvider.ts   sin red: responde con los datos del trámite abierto
 ```
 
-Para conectar un chatbot real:
-
-1. Crear un endpoint (ej. `api/taku.ts`) que reciba `{ messages, context }` y devuelva `{ text, suggestions? }`.
-   `context.tramite` trae el trámite abierto y `context.progreso` el avance.
-2. Setear `VITE_TAKU_CHAT_MODE=remote` (y `VITE_TAKU_CHAT_ENDPOINT` si no es `/api/taku`).
-
-No hace falta tocar la UI.
+El chat real ya está conectado: `api/taku.ts` recibe `{ messages, context }` (trámite abierto, progreso,
+nombre y web oficial verificada) y devuelve `{ text, suggestions }`. Si falla, el proveedor remoto
+degrada al local sin que el usuario lo note. `VITE_TAKU_CHAT_MODE=local` lo fuerza sin red.

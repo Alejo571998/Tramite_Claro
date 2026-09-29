@@ -5,6 +5,11 @@ import { ChecklistItem } from "../components/ChecklistItem";
 import { AlertCard } from "../components/AlertCard";
 import { Icon } from "../components/Icon";
 import { UrgencyBadge, urgencyHelp } from "../components/UrgencyBadge";
+import { DeadlineFact } from "../components/DeadlineFact";
+import { OfficialLink } from "../components/OfficialLink";
+import { DraftLetter } from "../components/DraftLetter";
+import { FeedbackWidget } from "../components/FeedbackWidget";
+import { findOrganismo } from "../lib/organismos";
 import { useAuth } from "../auth/AuthContext";
 import { tramitesStore, useTramites } from "../lib/tramitesStore";
 import { navigate } from "../lib/router";
@@ -45,7 +50,7 @@ export function ResultScreen({ id }: { id: string }) {
   useTramites(); // re-render al cambiar el store
   const t = tramitesStore.get(id);
   const { user } = useAuth();
-  const { emit, openChat, setChatContext } = useTaku();
+  const { emit, say, openChat, setChatContext } = useTaku();
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
@@ -63,9 +68,10 @@ export function ResultScreen({ id }: { id: string }) {
 
   // Contexto para el chat de Taku
   const nombre = user?.nombre.split(" ")[0];
+  const org = data ? findOrganismo(data.organismo, data.titulo) : null;
   useEffect(() => {
-    setChatContext({ tramite: data ?? null, progreso: { done: done.size, total }, nombre });
-  }, [data, done.size, total, nombre, setChatContext]);
+    setChatContext({ tramite: data ?? null, progreso: { done: done.size, total }, nombre, oficial: org ? { nombre: org.nombre, url: org.url } : null });
+  }, [data, done.size, total, nombre, org, setChatContext]);
   useEffect(() => () => setChatContext({ nombre }), [setChatContext, nombre]);
 
   // "Seguimos donde quedaste" al volver a un trámite
@@ -156,15 +162,7 @@ export function ResultScreen({ id }: { id: string }) {
       </article>
 
       <div className="facts">
-        <div className={`fact${data.plazo ? " fact--deadline" : ""}`}>
-          <span className="fact__icon">
-            <Icon name="clock" size={18} />
-          </span>
-          <div>
-            <span className="fact__label">Plazo</span>
-            <strong className="fact__value">{data.plazo || "No menciona un plazo"}</strong>
-          </div>
-        </div>
+        <DeadlineFact data={data} />
         <div className={`fact fact--${data.urgencia}`}>
           <span className="fact__icon">
             <Icon name={data.urgencia === "alta" ? "alert" : "info"} size={18} />
@@ -175,6 +173,8 @@ export function ResultScreen({ id }: { id: string }) {
           </div>
         </div>
       </div>
+
+      <OfficialLink org={org} organismo={data.organismo} />
 
       <section className="section" aria-labelledby="pasos-title">
         <div className="progress-head">
@@ -230,6 +230,8 @@ export function ResultScreen({ id }: { id: string }) {
         </section>
       )}
 
+      <DraftLetter data={data} />
+
       <section className="card ask-taku no-print">
         <span className="ask-taku__icon">
           <Icon name="chat" size={20} />
@@ -242,6 +244,15 @@ export function ResultScreen({ id }: { id: string }) {
           Preguntar
         </button>
       </section>
+
+      <FeedbackWidget
+        id={t.id}
+        data={data}
+        fuente={t.fuente}
+        onRated={(r) =>
+          r === "up" ? say("¡Qué bueno que te sirvió! 💚", "happy") : say("Perdón, lo voy a hacer mejor. ¿Me contás qué falló?", "concerned")
+        }
+      />
 
       <p className="disclaimer">
         <Icon name="info" size={14} /> Taku puede equivocarse. Confirmá plazos y requisitos en la web oficial de {data.organismo !== "No identificado" ? data.organismo : "el organismo"} antes de hacer el trámite.

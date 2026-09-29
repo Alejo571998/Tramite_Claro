@@ -38,6 +38,14 @@ function mapSeveridad(v: unknown): SeveridadAlerta {
   return "info";
 }
 
+/** Acepta solo fechas reales YYYY-MM-DD; cualquier otra cosa → "". */
+export function isoDate(v: unknown): string {
+  const s = str(v).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+  const d = new Date(`${s}T12:00:00Z`);
+  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s ? s : "";
+}
+
 export function normalizeTramite(raw: Record<string, unknown>): TramiteTraducido {
   const get = picker(raw);
   const checklist = arr(get(["checklist", "lista de verificacion", "pasos", "steps"]))
@@ -77,7 +85,8 @@ export function normalizeTramite(raw: Record<string, unknown>): TramiteTraducido
     urgencia: mapUrgencia(get(["urgencia", "urgency", "prioridad"])),
     checklist,
     alertas,
-    plazo: str(get(["plazo", "deadline", "vigencia", "vencimiento", "fecha"])),
+    plazo: str(get(["plazo", "deadline", "vigencia", "vencimiento"])),
+    fecha_limite: isoDate(get(["fecha_limite", "fechalimite", "fecha", "due_date"])),
     glosario,
   };
 }

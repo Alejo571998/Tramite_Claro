@@ -1,7 +1,6 @@
 // src/taku/chat/provider.ts — contrato del chat de Taku.
-// La UI (TakuChat) solo conoce esta interfaz. Hoy usa el proveedor local;
-// para conectar un chatbot real: VITE_TAKU_CHAT_MODE=remote y un endpoint que
-// reciba { messages, context } y devuelva { text, suggestions? }.
+// La UI (TakuChat) solo conoce esta interfaz. Por defecto usa el chat real
+// (POST /api/taku con Gemini) y, si falla, degrada al proveedor local.
 import type { TakuChatContext } from "../types";
 import { localProvider } from "./localProvider";
 import { createRemoteProvider } from "./remoteProvider";
@@ -27,8 +26,8 @@ export interface TakuChatProvider {
   starters(context: TakuChatContext): string[];
 }
 
+/** Por defecto Taku usa el chat real (api/taku.ts). VITE_TAKU_CHAT_MODE=local lo fuerza sin red. */
 export function createChatProvider(): TakuChatProvider {
-  const mode = import.meta.env.VITE_TAKU_CHAT_MODE;
-  if (mode === "remote") return createRemoteProvider(import.meta.env.VITE_TAKU_CHAT_ENDPOINT || "/api/taku", localProvider);
-  return localProvider;
+  if (import.meta.env.VITE_TAKU_CHAT_MODE === "local") return localProvider;
+  return createRemoteProvider(import.meta.env.VITE_TAKU_CHAT_ENDPOINT || "/api/taku", localProvider);
 }

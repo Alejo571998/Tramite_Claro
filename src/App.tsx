@@ -13,9 +13,9 @@ import { navigate, parse, useHash } from "./lib/router";
 function Routes() {
   const hash = useHash();
   const route = parse(hash);
-  const { user, guest } = useAuth();
+  const { user, guest, ready } = useAuth();
   const isAuthRoute = route.name === "ingresar" || route.name === "crear-cuenta";
-  const needsAuth = !user && !guest && !isAuthRoute;
+  const needsAuth = ready && !user && !guest && !isAuthRoute;
   const { onNavigate } = useTaku();
 
   useEffect(() => {
@@ -32,6 +32,12 @@ function Routes() {
     document.title = titles[route.name] ? `${titles[route.name]} · Trámite Claro` : "Trámite Claro — Los trámites, en palabras simples";
   }, [route.name]);
 
+  if (!ready)
+    return (
+      <div className="boot" aria-busy="true" aria-label="Cargando">
+        <span className="boot__dot" />
+      </div>
+    );
   if (isAuthRoute) return <AuthScreen key={route.name} mode={route.name as "ingresar" | "crear-cuenta"} />;
   if (needsAuth) return null;
 

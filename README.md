@@ -8,41 +8,43 @@ Demo: https://tramite-claro-omega.vercel.app/
 
 ## Funcionalidades
 
-- **Entrada flexible:** foto con cámara o galería (hasta 5 páginas), PDF (hasta 3 MB), texto pegado o
-  descripción libre. Arrastrar y soltar, y pegar con Ctrl+V.
-- **Resultado:** título, resumen coloquial, urgencia explicada, plazo destacado, checklist con
-  progreso guardado, alertas por severidad y glosario de palabras difíciles.
-- **Acciones:** escuchar (lectura en voz alta), compartir / copiar, imprimir.
-- **Mis trámites:** historial con avance; cuentas locales o uso sin cuenta.
-- **Taku:** asistente integrado en la experiencia (ver [docs/taku-ux.md](docs/taku-ux.md)).
-- Modo oscuro, responsive, accesible (teclado, lectores de pantalla, `prefers-reduced-motion`).
+- **Entrada flexible:** foto con cámara o galería (hasta 5 páginas, con aviso si sale oscura o borrosa),
+  PDF (hasta 3 MB), texto pegado o descripción libre. Arrastrar, pegar con Ctrl+V o **compartir desde
+  WhatsApp/Mail** con la app instalada.
+- **Resultado:** título, resumen coloquial, urgencia explicada, plazo con **cuenta regresiva y recordatorio**
+  (Google Calendar o .ics), **web oficial verificada** del organismo, checklist con progreso, alertas y glosario.
+- **Taku, asistente real:** chat con Gemini que conoce el trámite abierto y solo recomienda links oficiales.
+- **Borradores de notas:** consulta, prórroga, reclamo o descargo, listas para completar y presentar.
+- **Acciones:** escuchar, compartir, imprimir. **Feedback** 👍/👎 en cada resultado.
+- **Mis trámites:** historial con avance y vencimientos. Cuentas locales o en la nube (Supabase, opcional).
+- Instalable (PWA), funciona offline para ver lo guardado, modo oscuro, responsive y accesible.
 
 ## Desarrollo
 
 ```bash
 npm install
 cp .env.example .env.local   # y completá GEMINI_API_KEY
-npm run dev
+npm run dev                  # o npm run dev:ca si tu PC inspecciona HTTPS (antivirus/proxy)
+npm test                     # tests unitarios (Vitest)
+npm run test:e2e             # tests de punta a punta (Playwright, API simulada)
 ```
-
-Si en tu PC las llamadas a Gemini fallan con `unable to verify the first certificate` (antivirus o
-proxy que inspecciona HTTPS), usá `npm run dev:ca`, que hace que Node confíe en los certificados del sistema.
 
 ## Arquitectura
 
-- `api/traducir.ts` — Vercel Function. La **API key de Gemini vive solo en el servidor**
-  (`GEMINI_API_KEY`; por compatibilidad también lee `VITE_GEMINI_API_KEY`). En `vite dev`/`preview`
-  el mismo núcleo (`api/_lib/traducir.ts`) se sirve con un middleware.
-- `src/lib/api.ts` — cliente del endpoint, errores tipados y cancelación.
-- `src/auth/` — `AuthService` con implementación local (PBKDF2 + localStorage). Reemplazable por un backend.
-- `src/lib/tramitesStore.ts` — historial y progreso por usuario.
-- `src/taku/` — personaje, guion de reacciones y chat con proveedor intercambiable.
+- `api/*.ts` — Vercel Functions: `traducir`, `taku` (chat), `redactar`, `feedback`, `log`.
+  La **API key vive solo en el servidor**. Todas tienen límite de uso por IP y chequeo de origen
+  (`api/_lib/http.ts`, `rateLimit.ts`) y modelo de respaldo si Gemini está saturado (`gemini.ts`).
+  En `vite dev` los mismos núcleos se sirven con un middleware.
+- `src/lib/` — cliente de API, plazos/calendario, organismos oficiales, calidad de fotos, PWA,
+  historial (`tramitesStore`) y sincronización con la nube (`cloudSync`).
+- `src/auth/` — `AuthService` con implementación local o Supabase (se elige sola según la configuración).
+- `src/taku/` — personaje, guion de reacciones y chat con proveedor intercambiable ([docs/taku-ux.md](docs/taku-ux.md)).
+- `public/sw.js` — service worker: offline y recepción de archivos compartidos.
 
-## Deploy (Vercel)
+## Deploy
 
-1. En *Settings → Environment Variables* agregá `GEMINI_API_KEY` (podés borrar `VITE_GEMINI_API_KEY`
-   una vez que funcione: con el prefijo `VITE_` una variable puede terminar en el bundle público).
-2. Deploy. `vercel.json` le da hasta 60 s a la función.
+Vercel con `GEMINI_API_KEY`. Límite global, cuentas en la nube y login con Google son opcionales:
+ver [docs/configuracion.md](docs/configuracion.md).
 
 ## Assets de Taku
 

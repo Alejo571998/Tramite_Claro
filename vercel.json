@@ -1,6 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/traducir.ts": { "maxDuration": 60 }
-  }
+    "api/traducir.ts": { "maxDuration": 60 },
+    "api/taku.ts": { "maxDuration": 30 },
+    "api/redactar.ts": { "maxDuration": 30 },
+    "api/feedback.ts": { "maxDuration": 10 },
+    "api/log.ts": { "maxDuration": 10 }
+  },
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
 }

@@ -28,6 +28,8 @@ export interface TramiteTraducido {
   checklist: ChecklistItem[];
   alertas: Alerta[];
   plazo: string;
+  /** Fecha límite concreta en formato YYYY-MM-DD, si el documento la permite calcular. */
+  fecha_limite?: string;
   glosario?: TerminoGlosario[];
 }
 
@@ -38,7 +40,7 @@ export type TraducirRequest =
   | { tipo: "texto"; texto: string }
   | { tipo: "archivos"; fuente: "foto" | "pdf"; archivos: { mimeType: string; data: string }[] };
 
-export type ApiErrorCode = "quota" | "busy" | "too_large" | "bad_input" | "config" | "unreadable" | "unknown";
+export type ApiErrorCode = "quota" | "busy" | "too_large" | "bad_input" | "config" | "unreadable" | "rate_limited" | "unknown";
 
 export interface ApiErrorBody {
   error: { code: ApiErrorCode; message: string };

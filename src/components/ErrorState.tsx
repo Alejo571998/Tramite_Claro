@@ -9,6 +9,7 @@ const TIPS: Partial<Record<ErrorCode, string>> = {
   too_large: "Probá con menos páginas o un archivo más liviano.",
   unreadable: "Probá con una foto con más luz, de frente y sin cortar bordes. O pegá el texto.",
   config: "Es un problema de configuración del servidor, no tuyo.",
+  rate_limited: "Es un límite para que el servicio alcance para todos. Mientras tanto, podés revisar tus trámites guardados.",
 };
 
 export function ErrorState({ code, message, onRetry }: { code: ErrorCode; message: string; onRetry?: () => void }) {

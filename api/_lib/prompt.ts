@@ -12,10 +12,18 @@ Reglas:
 - Si el texto no parece ser un trámite real, respondé igual con tu mejor interpretación pero marcá organismo como "No identificado" y sé conservador con el checklist en vez de inventar pasos.
 - El campo "plazo" queda vacío ("") si el texto no menciona ningún plazo o vigencia concreta. No lo completes con suposiciones.
 - Campos con valores cerrados: "urgencia" debe ser EXACTAMENTE "baja", "media" o "alta" (sin tilde, minúscula, singular). "severidad" debe ser EXACTAMENTE "info", "importante" o "critico" (sin tilde, minúscula).
-- Las claves del JSON deben ser EXACTAMENTE: titulo, resumen, organismo, urgencia, checklist, alertas, plazo, glosario. No las traduzcas ni cambies.`;
+- "fecha_limite" va en formato YYYY-MM-DD solo si hay una fecha concreta; si el plazo es relativo a algo que no conocés (ej: "10 días desde la notificación" sin fecha de notificación) o es recurrente (ej: "febrero y agosto de cada año"), dejalo vacío.
+- Las claves del JSON deben ser EXACTAMENTE: titulo, resumen, organismo, urgencia, checklist, alertas, plazo, fecha_limite, glosario. No las traduzcas ni cambies.`;
+
+/** Fecha de hoy en Argentina, para que el modelo pueda resolver "antes del 31 de diciembre". */
+export function hoyAR(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(now);
+}
 
 export function promptTexto(texto: string): string {
   return `${SYSTEM_PROMPT}
+
+Hoy es ${hoyAR()}.
 
 A continuación va lo que mandó la persona. Puede ser el texto copiado del trámite, o una descripción con sus propias palabras de lo que le llegó o lo que tiene que hacer. En ambos casos explicáselo y armale los pasos.
 
@@ -32,6 +40,8 @@ export function promptArchivos(fuente: "foto" | "pdf", cantidad: number): string
         ? `Estas ${cantidad} imágenes son fotos de las páginas de un mismo trámite, en orden.`
         : "Esta imagen es una foto de un trámite en papel o de una pantalla.";
   return `${SYSTEM_PROMPT}
+
+Hoy es ${hoyAR()}.
 
 ${que} Primero leé el texto visible (puede estar inclinado, con sombras, o parcialmente cortado) y después aplicá las mismas reglas. Si alguna parte no se lee, no la inventes: mencionalo en una alerta de severidad "info".`;
 }

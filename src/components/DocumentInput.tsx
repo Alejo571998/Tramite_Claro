@@ -2,7 +2,7 @@
 // Arrastrar, pegar (Ctrl+V) o usar la cámara. Si soltás un PDF en "Foto", cambia solo.
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./Icon";
-import { MAX_PAGINAS, MAX_PDF_BYTES, blobToBase64, compressImage, formatBytes, isImage, isPdf } from "../lib/files";
+import { MAX_PAGINAS, MAX_PDF_BYTES, analyzeImage, blobToBase64, compressImage, formatBytes, isImage, isPdf, type ImageQuality } from "../lib/files";
 import { readJSON, uid, writeJSON } from "../lib/storage";
 import { useTaku } from "../taku/TakuContext";
 import type { TraducirRequest } from "../types/tramite";
@@ -13,13 +13,19 @@ interface Page {
   id: string;
   file: File;
   url: string;
+  /** Resultado del control de calidad (undefined = analizando o no se pudo). */
+  issues?: ImageQuality["issues"];
 }
+
+const ISSUE_LABEL: Record<ImageQuality["issues"][number], string> = { oscura: "Oscura", borrosa: "Borrosa", chica: "Poca resolución" };
 
 interface Props {
   onSubmit: (req: TraducirRequest, fuente: Modo) => void;
   busy?: boolean;
   /** Texto precargado (ej: "Usar el texto" de un ejemplo). Para re-aplicarlo, remontar con otra `key`. */
   initialText?: string;
+  /** Archivos recibidos desde "Compartir" (PWA share target). */
+  initialFiles?: File[];
 }
 
 const MODOS: { id: Modo; label: string; icon: IconName }[] = [
@@ -29,7 +35,7 @@ const MODOS: { id: Modo; label: string; icon: IconName }[] = [
 ];
 const MODE_KEY = "tc:input-mode";
 
-export function DocumentInput({ onSubmit, busy, initialText }: Props) {
+export function DocumentInput({ onSubmit, busy, initialText, initialFiles }: Props) {
   const { emit } = useTaku();
   const [modo, setModoState] = useState<Modo>(() => (initialText ? "texto" : readJSON<Modo>(MODE_KEY, "foto")));
   const [pages, setPages] = useState<Page[]>([]);
@@ -58,10 +64,30 @@ export function DocumentInput({ onSubmit, busy, initialText }: Props) {
     if (initialText) textRef.current?.focus({ preventScroll: true });
   }, [initialText]);
 
+  // Archivos compartidos desde otra app: se cargan una sola vez.
+  const sharedConsumed = useRef(false);
+  useEffect(() => {
+    if (!initialFiles?.length || sharedConsumed.current) return;
+    sharedConsumed.current = true;
+    addFiles(initialFiles, { silent: true });
+    emit({ type: "share:received", count: initialFiles.length });
+  }, [initialFiles]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function checkQuality(nuevas: Page[]) {
+    const results = await Promise.all(nuevas.map((p) => analyzeImage(p.file).catch(() => null)));
+    const byId = new Map(nuevas.map((p, i) => [p.id, results[i]?.issues ?? []]));
+    setPages((prev) => prev.map((p) => (byId.has(p.id) ? { ...p, issues: byId.get(p.id) } : p)));
+    const idx = results.findIndex((r) => r && r.issues.length);
+    if (idx >= 0) {
+      const pagina = pagesRef.current.findIndex((p) => p.id === nuevas[idx].id) + 1;
+      emit({ type: "input:quality", issues: results[idx]!.issues, pagina: Math.max(1, pagina) });
+    }
+  }
+
   // Liberar las URLs de preview al desmontar
   useEffect(() => () => pagesRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
 
-  function addFiles(list: FileList | File[] | null) {
+  function addFiles(list: FileList | File[] | null, { silent = false } = {}) {
     const files = Array.from(list ?? []);
     if (!files.length) return;
     setProblem(null);
@@ -75,7 +101,7 @@ export function DocumentInput({ onSubmit, busy, initialText }: Props) {
       }
       setModo("pdf");
       setPdf(f);
-      emit({ type: "input:files", fuente: "pdf", count: 1 });
+      if (!silent) emit({ type: "input:files", fuente: "pdf", count: 1 });
       return;
     }
 
@@ -95,7 +121,8 @@ export function DocumentInput({ onSubmit, busy, initialText }: Props) {
     const total = pagesRef.current.length + nuevas.length;
     pagesRef.current = [...pagesRef.current, ...nuevas];
     setPages((prev) => [...prev, ...nuevas]);
-    emit({ type: "input:files", fuente: "foto", count: total });
+    if (!silent) emit({ type: "input:files", fuente: "foto", count: total });
+    void checkQuality(nuevas);
   }
 
   function removePage(id: string) {
@@ -208,6 +235,11 @@ export function DocumentInput({ onSubmit, busy, initialText }: Props) {
                   <li key={p.id} className="page-thumb">
                     <img src={p.url} alt={`Página ${i + 1}`} />
                     <span className="page-thumb__n">{i + 1}</span>
+                    {p.issues && p.issues.length > 0 && (
+                      <span className="page-thumb__warn" title="Puede que no se lea bien. Si podés, sacala de nuevo.">
+                        <Icon name="alert" size={12} /> {ISSUE_LABEL[p.issues[0]]}
+                      </span>
+                    )}
                     <button type="button" className="page-thumb__rm" onClick={() => removePage(p.id)} aria-label={`Quitar página ${i + 1}`}>
                       <Icon name="x" size={14} />
                     </button>

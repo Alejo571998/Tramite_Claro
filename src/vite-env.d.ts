@@ -5,3 +5,5 @@ interface ImportMetaEnv {
   readonly VITE_TAKU_CHAT_MODE?: string;
   readonly VITE_TAKU_CHAT_ENDPOINT?: string;
 }
+
+declare const __APP_RELEASE__: string;

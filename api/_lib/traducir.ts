@@ -1,23 +1,11 @@
-// api/_lib/traducir.ts
-// Núcleo de la traducción, independiente del runtime (Vercel Function o middleware
-// de Vite en dev). La API key vive SOLO acá, nunca en el bundle del cliente.
-//
-// Modelo pinneado: gemini-3.5-flash (GA 19/05/2026, structured outputs, free tier).
-// gemini-2.5-flash devuelve 404 para keys nuevas; gemini-3.6-flash dio 503 por
-// sobrecarga. La config usa thinkingConfig (NO temperature) para la familia 3.x.
-import { GoogleGenAI } from "@google/genai";
+// api/_lib/traducir.ts — núcleo de POST /api/traducir, independiente del runtime
+// (Vercel Function o middleware de Vite en dev). La API key vive SOLO acá.
 import { tramiteResponseSchema } from "./schema.js";
 import { promptArchivos, promptTexto } from "./prompt.js";
 import { normalizeTramite } from "./normalize.js";
-import type { ApiErrorBody, ApiErrorCode, TraducirRequest, TramiteTraducido } from "../../src/types/tramite.ts";
-
-const MODEL_ID = "gemini-3.5-flash";
-
-const GENERATION_CONFIG = {
-  responseMimeType: "application/json",
-  responseSchema: tramiteResponseSchema,
-  thinkingConfig: { thinkingLevel: "low" as const },
-} as const;
+import { errMessage, generateJSON } from "./gemini.js";
+import { apiKey, fail, guarded, type ApiResult } from "./http.js";
+import type { TraducirRequest, TramiteTraducido } from "../../src/types/tramite.ts";
 
 const MAX_TEXTO = 30_000;
 const MAX_ARCHIVOS = 5;
@@ -25,17 +13,7 @@ const MAX_ARCHIVOS = 5;
 const MAX_BASE64_TOTAL = 4_200_000;
 const MIME_OK = /^(image\/(jpeg|png|webp|heic|heif)|application\/pdf)$/;
 
-export interface ApiResult {
-  status: number;
-  body: TramiteTraducido | ApiErrorBody;
-}
-
-const fail = (status: number, code: ApiErrorCode, message: string): ApiResult => ({
-  status,
-  body: { error: { code, message } },
-});
-
-function validate(body: unknown): TraducirRequest | ApiResult {
+export function validate(body: unknown): TraducirRequest | ApiResult<never> {
   const b = body as Partial<TraducirRequest> | null;
   if (!b || typeof b !== "object") return fail(400, "bad_input", "Pedido vacío.");
   if (b.tipo === "texto") {
@@ -60,9 +38,8 @@ function validate(body: unknown): TraducirRequest | ApiResult {
   return fail(400, "bad_input", "Tipo de pedido desconocido.");
 }
 
-function classify(err: unknown): ApiResult {
-  const msg = String((err as { message?: unknown })?.message ?? err ?? "");
-  const m = msg.toLowerCase();
+export function classify(err: unknown): ApiResult<never> {
+  const m = errMessage(err).toLowerCase();
   if (/429|resource_exhausted|quota/.test(m))
     return fail(429, "quota", "Hay mucha gente usando Trámite Claro ahora. Esperá unos segundos y probá de nuevo.");
   if (/503|500|502|unavailable|overloaded|high demand|temporarily/.test(m))
@@ -74,25 +51,9 @@ function classify(err: unknown): ApiResult {
   return fail(500, "unknown", "Algo salió mal al leer el trámite.");
 }
 
-const isTransient = (err: unknown) =>
-  /503|429|500|502|unavailable|resource_exhausted|overloaded|high demand|try again|temporarily/i.test(
-    String((err as { message?: unknown })?.message ?? err ?? ""),
-  );
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 2, baseDelayMs = 900): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt >= retries || !isTransient(err)) throw err;
-      await new Promise((r) => setTimeout(r, baseDelayMs * 2 ** attempt + Math.random() * 250));
-    }
-  }
-}
-
-export async function traducir(body: unknown, apiKey: string | undefined): Promise<ApiResult> {
-  if (!apiKey || apiKey === "your_api_key_here")
-    return fail(500, "config", "Falta configurar GEMINI_API_KEY en el servidor.");
+async function core(body: unknown): Promise<ApiResult<TramiteTraducido>> {
+  const key = apiKey();
+  if (!key) return fail(500, "config", "Falta configurar GEMINI_API_KEY en el servidor.");
 
   const req = validate(body);
   if ("status" in req) return req;
@@ -106,16 +67,8 @@ export async function traducir(body: unknown, apiKey: string | undefined): Promi
         ];
 
   try {
-    const client = new GoogleGenAI({ apiKey });
-    const response = await withRetry(() =>
-      client.models.generateContent({
-        model: MODEL_ID,
-        contents: [{ role: "user", parts }],
-        config: GENERATION_CONFIG as never,
-      }),
-    );
-    if (!response.text) return fail(502, "unreadable", "No pude leer nada en ese documento.");
-    const data = normalizeTramite(JSON.parse(response.text) as Record<string, unknown>);
+    const text = await generateJSON(key, parts, tramiteResponseSchema);
+    const data = normalizeTramite(JSON.parse(text) as Record<string, unknown>);
     if (!data.resumen && !data.checklist.length)
       return fail(422, "unreadable", "No encontré un trámite para explicar. Probá con una foto más nítida o pegando el texto.");
     return { status: 200, body: data };
@@ -124,3 +77,12 @@ export async function traducir(body: unknown, apiKey: string | undefined): Promi
     return classify(err);
   }
 }
+
+/** Límites por IP: generosos para una persona, cortos para un script. */
+export const traducir = guarded(
+  [
+    { name: "traducir-min", max: 6, windowSec: 60 },
+    { name: "traducir-dia", max: 60, windowSec: 86_400 },
+  ],
+  core,
+);

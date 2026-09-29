@@ -23,7 +23,10 @@ export type TakuEvent =
   | { type: "checklist:progress"; done: number; total: number }
   | { type: "checklist:complete"; titulo: string }
   | { type: "history:open"; count: number }
-  | { type: "result:revisit"; done: number; total: number };
+  | { type: "result:revisit"; done: number; total: number }
+  | { type: "deadline:soon"; titulo: string; dias: number }
+  | { type: "input:quality"; issues: ("oscura" | "borrosa" | "chica")[]; pagina: number }
+  | { type: "share:received"; count: number };
 
 export interface TakuBubbleAction {
   label: string;
@@ -45,4 +48,6 @@ export interface TakuChatContext {
   tramite?: TramiteTraducido | null;
   progreso?: { done: number; total: number };
   nombre?: string;
+  /** Web oficial verificada del organismo (src/lib/organismos.ts), si se identificó. */
+  oficial?: { nombre: string; url: string } | null;
 }

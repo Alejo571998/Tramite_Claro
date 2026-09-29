@@ -12,12 +12,15 @@ import { tramitesStore, useTramites } from "../lib/tramitesStore";
 import { EJEMPLOS, EJEMPLOS_EXTRA } from "../lib/examples";
 import { FALLBACK_RESPONSES } from "../lib/fallbackResponses";
 import { readJSON, writeJSON } from "../lib/storage";
+import { daysLeft } from "../lib/deadline";
+import { takeShared, useInstall } from "../lib/pwa";
 import { useTaku } from "../taku/TakuContext";
 import type { TraducirRequest } from "../types/tramite";
 
 const VISITED_KEY = "tc:visited";
 // Saludo una sola vez por carga de página (no cada vez que volvés al inicio).
 let greeted = false;
+let deadlineChecked = false;
 
 export function HomeScreen() {
   const { user } = useAuth();
@@ -25,6 +28,9 @@ export function HomeScreen() {
   const tramites = useTramites();
   const [phase, setPhase] = useState<{ s: "idle" } | { s: "loading"; fuente: Modo } | { s: "error"; code: ErrorCode; message: string }>({ s: "idle" });
   const [prefill, setPrefill] = useState<{ key: string; texto: string } | null>(null);
+  const [shared, setShared] = useState<{ key: string; files: File[]; text: string } | null>(null);
+  const install = useInstall();
+  const [installDismissed, setInstallDismissed] = useState(() => readJSON("tc:install-dismissed", false));
   const [lastReq, setLastReq] = useState<{ req: TraducirRequest; fuente: Modo } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLDivElement>(null);
@@ -42,6 +48,35 @@ export function HomeScreen() {
   }, [emit, nombre]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Archivos que llegaron con "Compartir → Trámite Claro" (ver public/sw.js)
+  useEffect(() => {
+    let alive = true;
+    takeShared().then((s) => {
+      if (!alive || !s) return;
+      setShared({ key: `shared-${Date.now()}`, ...s });
+      if (location.hash.includes("compartido")) history.replaceState(null, "", "#/");
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Recordatorio de Taku: el trámite en curso que vence más pronto (hasta 7 días), una vez por visita.
+  useEffect(() => {
+    if (deadlineChecked) return;
+    const t = window.setTimeout(() => {
+      deadlineChecked = true;
+      const proximo = tramitesStore
+        .list()
+        .filter((x) => x.done.length < x.data.checklist.length)
+        .map((x) => ({ x, n: daysLeft(x.data.fecha_limite) }))
+        .filter((o): o is { x: (typeof o)["x"]; n: number } => o.n !== null && o.n >= 0 && o.n <= 7)
+        .sort((a, b) => a.n - b.n)[0];
+      if (proximo) emit({ type: "deadline:soon", titulo: proximo.x.data.titulo || proximo.x.data.organismo, dias: proximo.n });
+    }, 4200);
+    return () => window.clearTimeout(t);
+  }, [emit]);
 
   async function analyze(req: TraducirRequest, fuente: Modo) {
     setLastReq({ req, fuente });
@@ -110,10 +145,48 @@ export function HomeScreen() {
                 onRetry={lastReq && phase.code !== "too_large" && phase.code !== "bad_input" ? () => analyze(lastReq.req, lastReq.fuente) : undefined}
               />
             )}
-            <DocumentInput key={prefill?.key ?? "base"} onSubmit={analyze} initialText={prefill?.texto} busy={loading} />
+            <DocumentInput
+              key={shared?.key ?? prefill?.key ?? "base"}
+              onSubmit={analyze}
+              initialText={shared?.text || prefill?.texto}
+              initialFiles={shared?.files}
+              busy={loading}
+            />
           </>
         </div>
       </div>
+
+      {!loading && !installDismissed && (install.canInstall || install.iosHint) && (
+        <div className="install-card">
+          <span className="install-card__icon">
+            <Icon name="phone" size={20} />
+          </span>
+          <div>
+            <strong>Tené a Taku en tu celular</strong>
+            <p>
+              {install.canInstall
+                ? "Instalá la app y compartí documentos desde WhatsApp o el mail directo a Trámite Claro."
+                : "En iPhone: tocá Compartir y después «Agregar a inicio»."}
+            </p>
+          </div>
+          {install.canInstall && (
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => void install.install()}>
+              Instalar
+            </button>
+          )}
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="No mostrar más"
+            onClick={() => {
+              writeJSON("tc:install-dismissed", true);
+              setInstallDismissed(true);
+            }}
+          >
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+      )}
 
       {recientes.length > 0 && !loading && (
         <section className="section" aria-labelledby="recientes-title">

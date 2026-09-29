@@ -55,6 +55,11 @@ export const tramitesStore = {
     cache = cache.map((t) => (t.id === id ? { ...t, done, updatedAt: Date.now() } : t));
     persist();
   },
+  /** Reemplaza la lista completa (ej: después de unir con lo guardado en la nube). */
+  replaceAll(items: TramiteGuardado[]) {
+    cache = items.slice(0, MAX_ITEMS);
+    persist();
+  },
   remove(id: string) {
     cache = cache.filter((t) => t.id !== id);
     persist();

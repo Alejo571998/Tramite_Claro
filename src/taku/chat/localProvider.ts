@@ -85,7 +85,9 @@ function answer(q: string, ctx: TakuChatContext): ChatReply {
     return {
       text:
         t.organismo && t.organismo !== "No identificado"
-          ? `Esto es de ${t.organismo}. Para direcciones y turnos, usá siempre la web oficial del organismo.`
+          ? ctx.oficial
+            ? `Esto es de ${t.organismo}. La web oficial es ${ctx.oficial.url} (la verificamos nosotros). Desconfiá de gestores que cobran por trámites gratuitos.`
+            : `Esto es de ${t.organismo}. Para direcciones y turnos, usá siempre la web oficial del organismo.`
           : "No pude identificar el organismo. Fijate el membrete o el logo del papel.",
     };
   if (has(q, "resum", "explica", "no entiendo", "de que se trata")) return { text: t.resumen, suggestions: ["¿Qué hago primero?"] };
